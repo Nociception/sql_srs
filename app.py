@@ -18,7 +18,7 @@ def main():
         pass
         query = st.text_area(label="type your query here")
         st.write(f"You typed: {query}")
-        result = duckdb.query(query)
+        result = duckdb.query(query).df()
         st.dataframe(result)
 
     with tab2:
