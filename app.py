@@ -13,14 +13,13 @@ def main():
         "b": [4, 5, 6],
     }
     df = pl.DataFrame(data)
-    df
 
     with tab1:
+        pass
         query = st.text_area(label="type your query here")
         st.write(f"You typed: {query}")
         result = duckdb.query(query)
         st.dataframe(result)
-
 
     with tab2:
         st.header("Dog")
