@@ -4,7 +4,21 @@ import polars as pl
 
 
 def main():
-    st.write("Hello, Streamlit!")
+    st.write("#SQL SRS")
+
+    st.write("Spaced Repetition System SQL Practice")
+
+
+    option = st.selectbox(
+        "What would you like to review?",
+        ("Joins", "Group by", "Windows functions"),
+        index=None,
+        placeholder="Select a theme",
+    )
+
+    st.write("You selected:", option)
+
+
 
     tab1, tab2, tab3 = st.tabs(["Cat", "Dog", "Owl"])
 
