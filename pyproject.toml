@@ -7,5 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "streamlit",
     "polars",
-    "duckdb"
+    "duckdb",
+    "pylint",
+    "isort",
 ]
