@@ -2,6 +2,7 @@
 import ast
 import duckdb
 import streamlit as st
+import polars as pl
 
 
 st.write("# SQL SRS")
@@ -31,31 +32,39 @@ with st.sidebar:
         exercise = con.execute(sidebar_query, [theme]).df()
         st.write(exercise)
 
+        answer_filename = exercise.loc[0]["exercise_name"].strip()
+        st.write(answer_filename)
+        with open(f"/home/nociception/dus/sql_srs/answers/{answer_filename}.sql", "r") as f:
+            answer_query = f.read()
+        answer_df = con.execute(answer_query).df()
+
 
 # allowed_tables = con.execute("SHOW TABLES").df()["name"].to_list()
 attempt_query = st.text_area(label="Type your query here")
+attemp_df = None
 if attempt_query:
-    result = con.execute(attempt_query).df()
-    st.dataframe(result)
+    attemp_df = con.execute(attempt_query).df()
+    st.dataframe(attemp_df)
 
-#     try:
-#         result = result.select(solution_df.columns)
-#         assert result.equals(solution_df)
+if attemp_df is not None:
+    try:
+        assert attemp_df.equals(answer_df)
+    except AttributeError:
+        st.write("Please enter a valid query")
+    except pl.exceptions.ColumnNotFoundError:
+        st.write("Some columns are missing")
+    except AssertionError:
+        st.markdown(
+            "<span style='color:red; font-weight:bold'>"
+            "Error: some values are not the same!</span>",
+            unsafe_allow_html=True,
+        )
+    if (delta := abs(attemp_df.shape[0] - answer_df.shape[0])) != 0:
+        st.write(f"{delta} lines are missing.")
+        # st.dataframe(attemp_df)
+        # st.write("Expected")
+        # st.dataframe(solution_df)
 
-#     except pl.exceptions.ColumnNotFoundError:
-#         st.write("Some columns are missing")
-#     except AssertionError:
-#         st.markdown(
-#             "<span style='color:red; font-weight:bold'>"
-#             "Error: some values are not the same!</span>",
-#             unsafe_allow_html=True,
-#         )
-#         st.dataframe(result)
-#         st.write("Expected")
-#         st.dataframe(solution_df)
-
-#     if delta := abs(result.shape[0] - solution_df.shape[0]) != 0:
-#         st.write(f"{delta} lines are missing.")
 
 tab1, tab2 = st.tabs(
     [
@@ -77,12 +86,12 @@ with tab1:
                 FROM {table}
             """).df())
 
+        
+
 with tab2:
     if exercise is not None:
-        answer_filename = exercise.loc[0]["exercise_name"].strip()
-        st.write(answer_filename)
-        with open(f"/home/nociception/dus/sql_srs/answers/{answer_filename}.sql", "r") as f:
-            answer_query = f.read()
-        st.write(f"Solution Query: {answer_query}")
+        st.write("Solution Query:")
+        st.code(answer_query)
+        st.dataframe(con.execute(answer_query).df())
 
 con.close()
