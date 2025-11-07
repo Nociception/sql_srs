@@ -5,7 +5,7 @@ con = duckdb.connect(database="data/exercises_sql_tables.duckdb", read_only=Fals
 
 con.execute("""
     CREATE OR REPLACE TABLE memory_state AS SELECT *
-    FROM read_json("exercises_list.json")
+    FROM read_csv("exercises_list.csv")
     """
 )
 
