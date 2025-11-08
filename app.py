@@ -22,6 +22,7 @@ class StreamlitApp:
         init_db.main()
         logging.error(os.listdir())
         logging.error(os.listdir("answers"))
+        logging.error(os.path.isfile("answers/sizes_and_trademarks.sql"))
         self.header()
         self.side_bar()
         self.attempt_section()
