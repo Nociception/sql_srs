@@ -44,7 +44,7 @@ class StreamlitApp:
 
                 sidebar_query = """
                     SELECT *
-                    FROM memory_state
+                    FROM exercises_list
                     WHERE theme = ?
                     ORDER BY last_reviewed ASC
                 """
@@ -107,7 +107,7 @@ class StreamlitApp:
                     self.con.execute(
                         f"""
                     SELECT tables
-                    FROM memory_state
+                    FROM exercises_list
                     WHERE exercise_name = '{self.most_ancient_reviewed_exercise}'
                 """
                     )
