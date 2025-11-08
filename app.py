@@ -3,6 +3,7 @@ import ast
 import duckdb
 import streamlit as st
 import polars as pl
+import init_db
 
 
 class StreamlitApp:
@@ -16,6 +17,7 @@ class StreamlitApp:
         self.answer_query = None
         self.answer_df = None
         self.most_ancient_reviewed_exercise = None
+        init_db.main()
         self.header()
         self.side_bar()
         self.attempt_section()
