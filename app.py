@@ -64,7 +64,7 @@ class StreamlitApp:
 
                 answer_filename = exercise.loc[0]["exercise_name"].strip()
                 with open(
-                    f"/home/nociception/dus/sql_srs/answers/{answer_filename}.sql",
+                    f"answers/{answer_filename}.sql",
                     "r",
                     encoding="utf-8",
                 ) as f:
