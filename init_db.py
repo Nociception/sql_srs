@@ -1,6 +1,6 @@
 # pylint: disable=missing-module-docstring
-import duckdb
 import os
+import duckdb
 
 
 def main():
@@ -10,10 +10,12 @@ def main():
     ) as con:
         for csv in os.listdir("data"):
             if csv.endswith(".csv"):
-                con.execute(f"""
+                con.execute(
+                    f"""
                     CREATE OR REPLACE TABLE {csv[:-4]} AS SELECT *
                     FROM read_csv("data/{csv}")
-                """)
+                """
+                )
 
 
 if __name__ == "__main__":
