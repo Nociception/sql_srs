@@ -28,27 +28,33 @@ with st.sidebar:
             SELECT *
             FROM memory_state
             WHERE theme = ?
+            ORDER BY last_reviewed ASC
         """
         exercise = con.execute(sidebar_query, [theme]).df()
-        st.write(exercise)
+        
+        st.write(f"{theme} related exercises:")
+        st.dataframe(exercise)
+
+        most_ancient_reviewed_exercise = exercise.loc[0]["exercise_name"].strip()
+        st.write(f"Most ancient reviewed exercise: {most_ancient_reviewed_exercise}")
 
         answer_filename = exercise.loc[0]["exercise_name"].strip()
-        st.write(answer_filename)
         with open(f"/home/nociception/dus/sql_srs/answers/{answer_filename}.sql", "r") as f:
             answer_query = f.read()
         answer_df = con.execute(answer_query).df()
 
 
+#TODO SQL INJECTION RISK
 # allowed_tables = con.execute("SHOW TABLES").df()["name"].to_list()
 attempt_query = st.text_area(label="Type your query here")
-attemp_df = None
+attempt_df = None
 if attempt_query:
-    attemp_df = con.execute(attempt_query).df()
-    st.dataframe(attemp_df)
+    attempt_df = con.execute(attempt_query).df()
+    st.dataframe(attempt_df)
 
-if attemp_df is not None:
+if attempt_df is not None:
     try:
-        assert attemp_df.equals(answer_df)
+        assert attempt_df.equals(answer_df)
     except AttributeError:
         st.write("Please enter a valid query")
     except pl.exceptions.ColumnNotFoundError:
@@ -59,9 +65,9 @@ if attemp_df is not None:
             "Error: some values are not the same!</span>",
             unsafe_allow_html=True,
         )
-    if (delta := abs(attemp_df.shape[0] - answer_df.shape[0])) != 0:
+    if (delta := abs(attempt_df.shape[0] - answer_df.shape[0])) != 0:
         st.write(f"{delta} lines are missing.")
-        # st.dataframe(attemp_df)
+        # st.dataframe(attempt_df)
         # st.write("Expected")
         # st.dataframe(solution_df)
 
@@ -76,17 +82,14 @@ tab1, tab2 = st.tabs(
 with tab1:
     if exercise is not None:
         st.write("Exercise Data:")
-        st.dataframe(exercise)
         exercise_table = ast.literal_eval(exercise.loc[0]["tables"].strip())
-        st.write(f"Exercise Table: {exercise_table}")
+        st.write(f"Exercise Table(s): {exercise_table}")
         for table in exercise_table:
             st.write(table)
             st.dataframe(con.execute(f"""
                 SELECT *
                 FROM {table}
             """).df())
-
-        
 
 with tab2:
     if exercise is not None:

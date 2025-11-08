@@ -21,4 +21,17 @@ con.execute("""
     """
 )
 
+con.execute("""
+    CREATE OR REPLACE TABLE sizes AS SELECT *
+    FROM read_csv("sizes.csv")
+    """
+)
+
+con.execute("""
+    CREATE OR REPLACE TABLE trademarks AS SELECT *
+    FROM read_csv("trademarks.csv")
+    """
+)
+
+
 con.close()
