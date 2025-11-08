@@ -21,6 +21,7 @@ class StreamlitApp:
         self.most_ancient_reviewed_exercise = None
         init_db.main()
         logging.error(os.listdir())
+        logging.error(os.listdir("answers"))
         self.header()
         self.side_bar()
         self.attempt_section()
