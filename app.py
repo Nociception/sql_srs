@@ -1,5 +1,7 @@
 # pylint: disable=missing-module-docstring
 import ast
+import logging
+import os
 import duckdb
 import streamlit as st
 import polars as pl
@@ -18,6 +20,7 @@ class StreamlitApp:
         self.answer_df = None
         self.most_ancient_reviewed_exercise = None
         init_db.main()
+        logging.error(os.listdir())
         self.header()
         self.side_bar()
         self.attempt_section()
