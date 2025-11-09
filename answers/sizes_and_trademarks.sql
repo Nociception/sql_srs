@@ -1,3 +1,6 @@
-SELECT *
-FROM sizes
-CROSS JOIN trademarks
+SELECT
+    *
+FROM
+    sizes
+CROSS JOIN
+    trademarks

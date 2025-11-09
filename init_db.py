@@ -8,12 +8,19 @@ def main():
     with duckdb.connect(
         database="data/exercises_sql_tables.duckdb", read_only=False
     ) as con:
-        for csv in os.listdir("data"):
-            if csv.endswith(".csv"):
+        for filename in os.listdir("data"):
+            if filename.endswith(".csv"):
                 con.execute(
                     f"""
-                    CREATE OR REPLACE TABLE {csv[:-4]} AS SELECT *
-                    FROM read_csv("data/{csv}")
+                    CREATE OR REPLACE TABLE {filename[:-4]} AS SELECT *
+                    FROM read_csv("data/{filename}")
+                """
+                )
+            elif filename.endswith(".parquet"):
+                con.execute(
+                    f"""
+                    CREATE OR REPLACE TABLE {filename[:-8]} AS SELECT *
+                    FROM read_parquet("data/{filename}")
                 """
                 )
 
