@@ -10,3 +10,6 @@ wheels/
 .venv
 
 test_db.py
+
+texas_executions.csv
+texas_executions_clean.csv

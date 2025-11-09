@@ -1,7 +1,5 @@
 # pylint: disable=missing-module-docstring
 import ast
-import logging
-import os
 import duckdb
 import streamlit as st
 import polars as pl
@@ -20,7 +18,6 @@ class StreamlitApp:
         self.answer_df = None
         self.most_ancient_reviewed_exercise = None
         init_db.main()
-        logging.error(os.listdir())
         self.header()
         self.side_bar()
         self.attempt_section()
@@ -34,9 +31,23 @@ class StreamlitApp:
     def side_bar(self):
         """Display the sidebar, to choose the theme and exercise"""
         with st.sidebar:
+
+            existing_themes = [
+                elt[0]
+                for elt in self.con.execute(
+                    """
+                    SELECT DISTINCT theme
+                    FROM exercises_list
+                """
+                ).fetchall()
+            ]
+            st.write(f"type(existing_themes): {type(existing_themes)}")
+            st.write(existing_themes)
+            print(existing_themes)
+
             self.theme = st.selectbox(
-                "What would you like to review?",
-                ("cross_joins", "GroupBy", "Windows Functions"),
+                label="What would you like to review?",
+                options=existing_themes,
                 index=None,
                 placeholder="Select a theme",
             )
@@ -44,30 +55,38 @@ class StreamlitApp:
             exercise = None
             if self.theme:
                 st.write("You selected:", self.theme)
-
                 sidebar_query = """
                     SELECT *
-                    FROM memory_state
+                    FROM exercises_list
                     WHERE theme = ?
                     ORDER BY last_reviewed ASC
                 """
                 exercise = self.con.execute(sidebar_query, [self.theme]).df()
-
                 st.write(f"{self.theme} related exercises:")
-                st.dataframe(exercise)
+            else:
+                st.write("No theme selected")
+                sidebar_query = """
+                    SELECT *
+                    FROM exercises_list
+                    ORDER BY last_reviewed ASC
+                """
+                exercise = self.con.execute(sidebar_query).df()
+                st.write("Suggested exercises (among the entire exercises pool):")
 
-                self.most_ancient_reviewed_exercise = exercise.loc[0][
-                    "exercise_name"
-                ].strip()
+            st.dataframe(exercise)
 
-                answer_filename = exercise.loc[0]["exercise_name"].strip()
-                with open(
-                    f"/home/nociception/dus/sql_srs/answers/{answer_filename}.sql",
-                    "r",
-                    encoding="utf-8",
-                ) as f:
-                    self.answer_query = f.read()
-                self.answer_df = self.con.execute(self.answer_query).df()
+            self.most_ancient_reviewed_exercise = exercise.loc[0][
+                "exercise_name"
+            ].strip()
+
+            answer_filename = exercise.loc[0]["exercise_name"].strip()
+            with open(
+                f"answers/{answer_filename}.sql",
+                "r",
+                encoding="utf-8",
+            ) as f:
+                self.answer_query = f.read()
+            self.answer_df = self.con.execute(self.answer_query).df()
 
     def attempt_section(self):
         """Section to attempt the exercise and compare with the expected answer"""
@@ -110,7 +129,7 @@ class StreamlitApp:
                     self.con.execute(
                         f"""
                     SELECT tables
-                    FROM memory_state
+                    FROM exercises_list
                     WHERE exercise_name = '{self.most_ancient_reviewed_exercise}'
                 """
                     )
