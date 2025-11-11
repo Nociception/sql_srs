@@ -16,15 +16,21 @@ def init_db_and_get_connection() -> duckdb.DuckDBPyConnection:
 
 
 class StreamlitApp:
-    """Class to encapsulate the Streamlit app functionalities"""
-
+    """
+    Class to encapsulate the Streamlit app functionalities
+    """
     def __init__(self, connection):
+        """TODO initialize all these session_state variables with a dict, in specific commit"""
         self.con = connection
         st.session_state.setdefault("themes", self.get_themes())
         st.session_state.setdefault("selected_theme", None)
         st.session_state.setdefault("exercises", [])
         st.session_state.setdefault("selected_exercise", None)
-
+        st.session_state.setdefault("solution_query", None)
+        st.session_state.setdefault("solution_df", None)
+        st.session_state.setdefault("attempt_query", None)
+        # st.session_state.setdefault("attempt_df", None)
+        
     def header(self) -> None:
         """Display the app header."""
         st.title("SQL Training App")
@@ -68,8 +74,6 @@ class StreamlitApp:
                 WHERE theme = ?
                 ORDER BY last_reviewed
             """
-            # st.write(f"st.session_state.selected_theme: {st.session_state.selected_theme}")
-            # st.write(f"type(st.session_state.selected_theme): {type(st.session_state.selected_theme)}")
             result = (
                 self.con
                 .execute(sidebar_query, [st.session_state.selected_theme])
@@ -110,12 +114,23 @@ class StreamlitApp:
             st.session_state.exercises = self.get_exercises()
             self.exercise_select_box()
 
-    def selection_report(self) -> None:
-        """Display selected exercise context (except the proper query and the expected df)"""
-        st.write(f'Selected theme: {st.session_state.selected_theme}')
-        st.write(f'Selected exercise: {st.session_state.selected_exercise}')
-        # st.write('Selected exercise subject: st.session_state.selected_exercise_subjec]')
-        # st.write('Selected exercise df(s): st.session_state.selected_exercise_d]')
+    def set_exercise_context(self) -> None:
+        """
+        Once an exercise is selected, store in `session_state`:
+        - `solution_query`
+        - `solution_df`
+        - TODO: `subject` into the .sql file
+        """
+        if "selected_exercise" in st.session_state and st.session_state["selected_exercise"] is not None:
+            with open(
+                f'answers/{st.session_state["selected_exercise"]}.sql',
+                "r",
+                encoding="utf-8",
+            ) as f:
+                st.session_state["solution_query"] = f.read()
+            st.session_state["solution_df"] = (
+                self.con.execute(st.session_state["solution_query"]).df()
+            )
 
     def attempt_query_area(self) -> None:
         """
@@ -128,94 +143,30 @@ class StreamlitApp:
             key="attempt_query",
         )
 
-    def run(self) -> None:
-        """Encapsulate the main flow of the Streamlit app"""
-        self.header()
-        self.side_bar()
-        self.selection_report()
-        # self.set_exercise_context()
+    def attempt_tab(self) -> None:
+        """"""
+        pass
 
-        st.write(st.session_state)
+    def solution_tab(self) -> None:
+        """"""
+        pass
 
-        self.attempt_query_area()
-
-
-if "app" not in st.session_state:
-    st.session_state.app = StreamlitApp(init_db_and_get_connection())
-
-st.session_state.app.run()
-
-
-
-#         self.attr = {
-#             "connection": init_db_and_get_connection(),
-#             "selected_theme": None,
-#             "selected_exercise": None,
-#             "solution_query": None,
-#             "solution_df": None,
-#             "attempt_query": None,
-#             "attempt_df": None,
-#             "user_name": None,
-#             "exercises": None,
-#             "themes": None,
-#         }
-#         self.attr["themes"] = self.get_themes()
-
-#         for key, value in {
-#             "selected_theme": None,
-#             "selected_exercise": None,
-#             "solution_query": None,
-#             "solution_df": None,
-#             "attempt_query": "",
-#             "attempt_df": None,
-#         }.items():
-#             st.session_state.setdefault(key, value)
-
-#     def run(self) -> None:
-#         
-#         self.header()
-#         self.side_bar()
-#         self.display_selected_exercise_context()
-#         self.attempt_query_field()
+    def tabs(self) -> None:
+        """"""
+        attempt_tab, solution_tab = st.tabs(
+            [
+                "Attempt",
+                "Solution",
+            ]
+        )
+        with attempt_tab:
+            self.attempt_tab()
+        with solution_tab:
+            self.solution_tab()
 #         self.display_result_tab()
 
 
-
-
-#     def set_exercise_context(self) -> None:
-#         """
-#         Set the proper answer and the expected df
-#         # self.attr["selected_exercise_subject"] = ""
-#         # self.attr["selected_exercise_df"] = []
-#         """
-#         if self.attr["selected_exercise"]:
-
-#             with open(
-#                 f'answers/{self.attr["selected_exercise"]}.sql',
-#                 "r",
-#                 encoding="utf-8",
-#             ) as f:
-#                 self.attr["solution_query"] = f.read()
-#             self.attr["solution_df"] = (
-#                 self.attr["connection"].execute(self.attr["solution_query"]).df()
-#             )
-
-
-
-
-#     def attempt_query_field(self) -> None:
-#         """Section to attempt the exercise and compare with the expected answer"""
-#         self.attr["attempt_query"] = st.text_area(label="Type your query here:")
-#         if (
-#             self.attr["attempt_query"] is not None
-#             and self.attr["attempt_df"] is not None
-#         ):
-#             self.attr["attempt_df"] = (
-#                 self.attr["connection"].execute(self.attr["attempt_query"]).df()
-#             )
-#             st.dataframe(self.attr["attempt_df"])
-
-#     def attempt_result_vs_expected_df_comparison(self) -> None:
+#    def attempt_result_vs_expected_df_comparison(self) -> None:
 #         """
 #         Compare the attempt result df with the expected df
 #         according to the selected exercise expected df
@@ -245,6 +196,7 @@ st.session_state.app.run()
 #                 ) != 0:
 #                     st.write(f"{delta} lines are missing.")
 
+
 #     def display_solution(self) -> None:
 #         """
 #         Display solution query and solution df in the dedicated solution tab.
@@ -259,3 +211,18 @@ st.session_state.app.run()
 #                 )
 
 
+    def run(self) -> None:
+        """Encapsulate the main flow of the Streamlit app"""
+        self.header()
+        self.side_bar()
+        self.set_exercise_context()
+        self.attempt_query_area()
+        self.tabs()
+#         remind to clean the current exercise variables after an exercise attempt session done (signaled from the user ?)
+
+
+
+if "app" not in st.session_state:
+    st.session_state.app = StreamlitApp(init_db_and_get_connection())
+
+st.session_state.app.run()
