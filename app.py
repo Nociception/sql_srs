@@ -9,7 +9,7 @@ def init_db_and_get_connection() -> duckdb.DuckDBPyConnection:
     """
     Initialize duckdb database.
     Return a DuckDB connection.
-    (function `st.cache_resource` decorated: run only one time)
+    (function `st.cache_resource` decorated: run only one time per session)
     """
     init_db.main()
     return duckdb.connect("data/exercises_sql_tables.duckdb", read_only=False)
@@ -25,15 +25,17 @@ class StreamlitApp:
         st.session_state.setdefault("themes", self.get_themes())
         st.session_state.setdefault("selected_theme", None)
         st.session_state.setdefault("exercises", [])
-        st.session_state.setdefault("selected_exercise", None)
-        st.session_state.setdefault("solution_query", None)
-        st.session_state.setdefault("solution_df", None)
+        st.session_state.setdefault("selex", None)
+        st.session_state.setdefault("selex_tables", [])
+        st.session_state.setdefault("selex_subject", None)
+        st.session_state.setdefault("selex_solution_query", None)
+        st.session_state.setdefault("selex_solution_df", None)
         st.session_state.setdefault("attempt_query", None)
         st.session_state.setdefault("attempt_df", None)
         
     def header(self) -> None:
         """Display the app header."""
-        st.title("SQL Training App")
+        st.title("SQL SRS - Training App")
         st.write("(SQL Spaced Repetition System)")
 
     def get_themes(self) -> list[str]:
@@ -92,7 +94,7 @@ class StreamlitApp:
     def exercise_select_box(self) -> None:
         """
         Exercise select box in the sidebar.
-        `key` field stores `selected_exercise` in the session_state.
+        `key` field stores `selex` in the session_state.
         """
         if st.session_state.selected_theme is not None:
             st.write(f'{st.session_state.selected_theme} related exercises:')
@@ -102,7 +104,7 @@ class StreamlitApp:
         st.selectbox(
             "Select an exercise",
             options=st.session_state.exercises,
-            key="selected_exercise",
+            key="selex",
             placeholder="No exercise selected",
             index=None,
         )
@@ -114,23 +116,45 @@ class StreamlitApp:
             st.session_state.exercises = self.get_exercises()
             self.exercise_select_box()
 
+            st.write(f"Selected theme: {st.session_state["selected_theme"]}")
+            st.write(f"Selected exercise: {st.session_state["selex"]}")
+
     def set_exercise_context(self) -> None:
         """
-        Once an exercise is selected, store in `session_state`:
-        - `solution_query`
-        - `solution_df`
-        - TODO: `subject` into the .sql file
+        Once an exercise is selected, store in `st.session_state`:
+        - `subject`
+        - `related table(s)`
+        - `selex_solution_query`
+        - `selex_solution_df`
         """
-        if "selected_exercise" in st.session_state and st.session_state["selected_exercise"] is not None:
+        if "selex" in st.session_state and st.session_state["selex"] is not None:
+            metadata_pattern: str = "-- "
+            sql_lines: list[str] | list[None] = []
             with open(
-                f'answers/{st.session_state["selected_exercise"]}.sql',
+                f'answers/{st.session_state["selex"]}.sql',
                 "r",
                 encoding="utf-8",
-            ) as f:
-                st.session_state["solution_query"] = f.read()
-            st.session_state["solution_df"] = (
-                self.con.execute(st.session_state["solution_query"]).df()
+            ) as sql_file:
+                for line in sql_file:
+                    if line.startswith(metadata_pattern):
+                        if metadata_pattern + "tables:" in line:
+                            st.session_state["selex_tables"] = line[line.index(':') + 1:].split()
+                        elif metadata_pattern + "subject:" in line:
+
+                            st.session_state["selex_subject"] = line[line.index(':') + 1:]
+                    else:
+                        sql_lines.append(line)
+            st.session_state["selex_solution_query"] = "".join(sql_lines)
+            st.session_state["selex_solution_df"] = (
+                self.con.execute(st.session_state["selex_solution_query"]).df()
             )
+        else:
+            st.write("Selex exercise context not set")
+
+    def display_selex_context(self) -> None:
+        """Display selected exercise subject just above the attempt query area"""
+        st.write(f"Selected exercise subject:\n{st.session_state["selex_subject"]}")
+        st.write(f"Relatad table(s): {', '.join(st.session_state["selex_tables"])}")
 
     def attempt_query_area(self) -> None:
         """
@@ -147,10 +171,10 @@ class StreamlitApp:
         """
         Handle what is displayed in the attempt tab:
         - `attempt_df` according to user's `attempt_query`
-        - comparison between `attempt_df` and `solution_df`, without displaying it in this tab; just clues
-        - `selected_exercise` related table(s)
+        - comparison between `attempt_df` and `selex_solution_df`, without displaying it in this tab; just clues
+        - `selex` related table(s)
         """
-        if st.session_state["solution_df"] is not None:
+        if st.session_state["selex_solution_df"] is not None:
             if st.session_state["attempt_query"] is not None:
                 try:
                     st.session_state["attempt_df"] = self.con.execute(st.session_state["attempt_query"]).df()
@@ -160,8 +184,26 @@ class StreamlitApp:
                     st.write("Your query does not seem to be valid. (#TODO More informations here soon)")
                     st.write(e)
 
+                if "attemp_df" in st.session_state and st.session_state["attempt_df"] is not None:
+                    #TODO this bloc does not seem to be visited anymore
+                    if (
+                        lines_delta :=
+                            st.session_state["attempt_df"].shape[0]
+                            - st.session_state["selex_solution_df"].shape[0]
+                    ) != 0:
+                        delta_message: str = f"extra" if lines_delta > 0 else f"missing"
+                        st.write(f"There are {abs(lines_delta)} {delta_message} line(s).")
+                
+                    if (
+                        columns_delta :=
+                            st.session_state["attempt_df"].shape[1]
+                            - st.session_state["selex_solution_df"].shape[1]
+                    ) != 0:
+                        delta_message: str = f"extra" if columns_delta > 0 else f"missing"
+                        st.write(f"There are {abs(columns_delta)} {delta_message} columns(s).")
+
                 try:
-                    assert st.session_state["attempt_df"].equals(st.session_state["solution_df"])
+                    assert st.session_state["attempt_df"].equals(st.session_state["selex_solution_df"])
                 except AttributeError:
                     st.write("Please enter a valid query.")
                 except pl.exceptions.ColumnNotFoundError:
@@ -172,33 +214,26 @@ class StreamlitApp:
                         "Error: some values are not the same!</span>",
                         unsafe_allow_html=True,
                     )
-                if (
-                    delta :=
-                        st.session_state["attempt_df"].shape[0]
-                        - st.session_state["solution_df"].shape[0]
-                ) != 0:
-                    delta_massage: str = f"extra" if delta > 0 else f"missing"
-                    st.write(f"There are {abs(delta)} {delta_massage} line(s).")
+
+
+            st.write("Selected exercise related table(s):")
+            for table in st.session_state["selex_tables"]:
+                st.dataframe(self.con.execute(f"""
+                    SELECT *
+                    FROM '{table}'
+                """))
         else:
             st.write("You may select an exercise before trying anything in this query area.")
 
     def solution_tab(self) -> None:
-        """"""
-        pass
-
-
-#     def display_solution(self) -> None:
-#         """
-#         Display solution query and solution df in the dedicated solution tab.
-#         """
-#         with self.attr["solution_tab"]:
-#             if self.attr["solution_query"] is not None:
-
-#                 st.write("Solution Query:")
-#                 st.code(self.attr["solution_query"])
-#                 st.dataframe(
-#                     self.attr["connection"].execute(self.attr["solution_query"]).df()
-#                 )
+        """
+        Display in the solution tab:
+        - `selex_solution_query`
+        - `selex_solution_df`
+        """
+        st.write("Solution query:")
+        st.code(st.session_state["selex_solution_query"])
+        st.dataframe(st.session_state["selex_solution_df"])
 
     def tabs(self) -> None:
         """"""
@@ -218,9 +253,10 @@ class StreamlitApp:
         self.header()
         self.side_bar()
         self.set_exercise_context()
+        self.display_selex_context()
         self.attempt_query_area()
         self.tabs()
-#         remind to clean the current exercise variables after an exercise attempt session done (signaled from the user ?)
+#       remind to clean the current exercise variables after an exercise attempt session done (signaled from the user ?)
 
 
 if "app" not in st.session_state:

@@ -7,7 +7,6 @@ To edit a csv in vscode (in a grid):
 
 handle sql injection
 
-Select box fields in the sidebar
-
+session_state
 
 Remove the db from the git repo/versions
