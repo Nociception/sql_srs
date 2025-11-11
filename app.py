@@ -2,7 +2,7 @@
 import polars as pl
 import duckdb
 import streamlit as st
-import init_db
+from init_db import init_db
 
 @st.cache_resource
 def init_db_and_get_connection() -> duckdb.DuckDBPyConnection:
@@ -11,27 +11,14 @@ def init_db_and_get_connection() -> duckdb.DuckDBPyConnection:
     Return a DuckDB connection.
     (function `st.cache_resource` decorated: run only one time per session)
     """
-    init_db.main()
+    init_db()
     return duckdb.connect("data/exercises_sql_tables.duckdb", read_only=False)
 
 
 class StreamlitApp:
-    """
-    Class to encapsulate the Streamlit app functionalities
-    """
+    """Class to encapsulate the Streamlit app functionalities."""
     def __init__(self, connection):
-        """TODO initialize all these session_state variables with a dict, in specific commit"""
         self.con = connection
-        # st.session_state.setdefault("themes", self.get_themes())
-        # st.session_state.setdefault("selected_theme", None)
-        # st.session_state.setdefault("exercises", [])
-        # st.session_state.setdefault("selex", None)
-        # st.session_state.setdefault("selex_tables", [])
-        # st.session_state.setdefault("selex_subject", None)
-        # st.session_state.setdefault("selex_solution_query", None)
-        # st.session_state.setdefault("selex_solution_df", None)
-        # st.session_state.setdefault("attempt_query", None)
-        # st.session_state.setdefault("attempt_df", None)
 
         defaults = {
             "themes": self.get_themes(),
@@ -45,7 +32,6 @@ class StreamlitApp:
             "attempt_query": None,
             "attempt_df": None,
         }
-
         for key, value in defaults.items():
             st.session_state.setdefault(key, value)
         
@@ -56,17 +42,7 @@ class StreamlitApp:
 
     def get_themes(self) -> list[str]:
         """Gets all the existing themes in the exercises database"""
-        return [
-            elt[0]
-            for elt in self.con
-            .execute(
-                """
-                SELECT DISTINCT theme
-                FROM exercises_list
-            """
-            )
-            .fetchall()
-        ]
+        return self.con.execute("SELECT * FROM themes").df()["theme"].to_list()
 
     def theme_select_box(self) -> None:
         """
@@ -251,7 +227,9 @@ class StreamlitApp:
         st.dataframe(st.session_state["selex_solution_df"])
 
     def tabs(self) -> None:
-        """"""
+        """
+        TODO: clean the current exercise variables after an exercise attempt session done (signaled from the user ?)
+        """
         attempt_tab, solution_tab = st.tabs(
             [
                 "Attempt",
@@ -271,7 +249,6 @@ class StreamlitApp:
         self.display_selex_context()
         self.attempt_query_area()
         self.tabs()
-#       remind to clean the current exercise variables after an exercise attempt session done (signaled from the user ?)
 
 
 if "app" not in st.session_state:

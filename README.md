@@ -10,3 +10,5 @@ handle sql injection
 session_state
 
 Remove the db from the git repo/versions
+
+replace all .df() with pl.Dataframe
