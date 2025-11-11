@@ -22,16 +22,32 @@ class StreamlitApp:
     def __init__(self, connection):
         """TODO initialize all these session_state variables with a dict, in specific commit"""
         self.con = connection
-        st.session_state.setdefault("themes", self.get_themes())
-        st.session_state.setdefault("selected_theme", None)
-        st.session_state.setdefault("exercises", [])
-        st.session_state.setdefault("selex", None)
-        st.session_state.setdefault("selex_tables", [])
-        st.session_state.setdefault("selex_subject", None)
-        st.session_state.setdefault("selex_solution_query", None)
-        st.session_state.setdefault("selex_solution_df", None)
-        st.session_state.setdefault("attempt_query", None)
-        st.session_state.setdefault("attempt_df", None)
+        # st.session_state.setdefault("themes", self.get_themes())
+        # st.session_state.setdefault("selected_theme", None)
+        # st.session_state.setdefault("exercises", [])
+        # st.session_state.setdefault("selex", None)
+        # st.session_state.setdefault("selex_tables", [])
+        # st.session_state.setdefault("selex_subject", None)
+        # st.session_state.setdefault("selex_solution_query", None)
+        # st.session_state.setdefault("selex_solution_df", None)
+        # st.session_state.setdefault("attempt_query", None)
+        # st.session_state.setdefault("attempt_df", None)
+
+        defaults = {
+            "themes": self.get_themes(),
+            "selected_theme": None,
+            "exercises": [],
+            "selex": None,
+            "selex_tables": [],
+            "selex_subject": None,
+            "selex_solution_query": None,
+            "selex_solution_df": None,
+            "attempt_query": None,
+            "attempt_df": None,
+        }
+
+        for key, value in defaults.items():
+            st.session_state.setdefault(key, value)
         
     def header(self) -> None:
         """Display the app header."""
