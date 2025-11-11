@@ -20,18 +20,107 @@ class StreamlitApp:
 
     def __init__(self, connection):
         self.con = connection
+        st.session_state.setdefault("themes", self.get_themes())
+        st.session_state.setdefault("selected_theme", None)
+        st.session_state.setdefault("exercises", [])
+        st.session_state.setdefault("selected_exercise", None)
 
     def header(self) -> None:
+        """Display the app header."""
+        st.title("SQL Training App")
+        st.write("(SQL Spaced Repetition System)")
+
+    def get_themes(self) -> list[str]:
+        """Gets all the existing themes in the exercises database"""
+        return [
+            elt[0]
+            for elt in self.con
+            .execute(
+                """
+                SELECT DISTINCT theme
+                FROM exercises_list
+            """
+            )
+            .fetchall()
+        ]
+
+    def theme_select_box(self) -> None:
         """
-        Display the app header.
-        (function `st.cache_resource` decorated: run only one time)
+        Theme select box in the sidebar.
+        `key` field stores `selected_theme` in the session_state.
         """
-        st.title("# SQL Training App")
+        st.selectbox(
+            "Select a theme",
+            options=st.session_state.themes,
+            key="selected_theme",
+            placeholder="No theme selected",
+            index=None,
+        )
+
+    def get_exercises(self) -> list[str]:
+        """Get the exercises list, theme (or not if none selected) related"""
+        result: None | list = None
+        sidebar_query: None | str = None
+        if st.session_state.selected_theme:
+            sidebar_query = """
+                SELECT exercise_name
+                FROM exercises_list
+                WHERE theme = ?
+                ORDER BY last_reviewed
+            """
+            # st.write(f"st.session_state.selected_theme: {st.session_state.selected_theme}")
+            # st.write(f"type(st.session_state.selected_theme): {type(st.session_state.selected_theme)}")
+            result = (
+                self.con
+                .execute(sidebar_query, [st.session_state.selected_theme])
+                .fetchall()
+            )
+        else:
+            sidebar_query = """
+                SELECT exercise_name
+                FROM exercises_list
+                ORDER BY last_reviewed
+            """
+            result = self.con.execute(sidebar_query).fetchall()
+
+        return [elt[0] for elt in result]
+
+    def exercise_select_box(self) -> None:
+        """
+        Exercise select box in the sidebar.
+        `key` field stores `selected_exercise` in the session_state.
+        """
+        if st.session_state.selected_theme is not None:
+            st.write(f'{st.session_state.selected_theme} related exercises:')
+        else:
+            st.write("No theme selected. Any exercise can be selected.")
+
+        st.selectbox(
+            "Select an exercise",
+            options=st.session_state.exercises,
+            key="selected_exercise",
+            placeholder="No exercise selected",
+            index=None,
+        )
+
+    def side_bar(self) -> None:
+        """Display the sidebar, to choose the theme and exercise"""
+        with st.sidebar:
+            self.theme_select_box()
+            st.session_state.exercises = self.get_exercises()
+            self.exercise_select_box()
+
+    def selection_report(self) -> None:
+        """Display selected exercise context (except the proper query and the expected df)"""
+        st.write(f'Selected theme: {st.session_state.selected_theme}')
+        st.write(f'Selected exercise: {st.session_state.selected_exercise}')
+        # st.write('Selected exercise subject: st.session_state.selected_exercise_subjec]')
+        # st.write('Selected exercise df(s): st.session_state.selected_exercise_d]')
 
     def attempt_query_area(self) -> None:
         """
         Provide a text area allowing user to type a query to answer the selected exercise.
-        `key` field stores the `attempt_query` in the session_state.
+        `key` field stores `attempt_query` in the session_state.
         """
         st.text_area(
             "Type your SQL query:",
@@ -39,8 +128,15 @@ class StreamlitApp:
             key="attempt_query",
         )
 
-    def run(self):
+    def run(self) -> None:
+        """Encapsulate the main flow of the Streamlit app"""
         self.header()
+        self.side_bar()
+        self.selection_report()
+        # self.set_exercise_context()
+
+        st.write(st.session_state)
+
         self.attempt_query_area()
 
 
@@ -76,7 +172,6 @@ st.session_state.app.run()
 #             st.session_state.setdefault(key, value)
 
 #     def run(self) -> None:
-#         """Encapsulate the main flow of the Streamlit app"""
 #         
 #         self.header()
 #         self.side_bar()
@@ -84,94 +179,8 @@ st.session_state.app.run()
 #         self.attempt_query_field()
 #         self.display_result_tab()
 
-#     def header(self) -> None:
-#         """Display the header of the Streamlit app"""
-#         st.write("# SQL SRS")
-#         st.write("(SQL Spaced Repetition System)")
-#         # st.write(f"\nHello {self.attr['user_name']}!")
-
-#     def side_bar(self) -> None:
-#         """Display the sidebar, to choose the theme and exercise"""
-#         with st.sidebar:
-#             themes = self.get_themes()
-#             st.session_state.selected_theme = st.selectbox(
-#                 "Theme", options=themes, index=None, placeholder="Select a theme",
-#                 key="theme_select"
-#             )
 
 
-#             self.theme_select_box()
-#             self.exercise_select_box()
-#             self.set_exercise_context()
-    
-#     def get_themes(self) -> list[str]:
-#         """Gets all the existing themes in the exercises database"""
-#         return [
-#             elt[0]
-#             for elt in self.attr["connection"]
-#             .execute(
-#                 """
-#                 SELECT DISTINCT theme
-#                 FROM exercises_list
-#             """
-#             )
-#             .fetchall()
-#         ]
-
-#     def theme_select_box(self) -> None:
-#         """Display a select box for all existing themes,"""
-#         self.attr["selected_theme"] = st.selectbox(
-#             label="What would you like to review?",
-#             options=self.attr["themes"],
-#             index=None,
-#             placeholder="Select a theme",
-#         )
-#         if self.attr["selected_theme"]:
-#             st.write("You selected:", self.attr["selected_theme"])
-#         else:
-#             st.write("No theme selected.")
-
-#     def get_exercises(self) -> list[str]:
-#         """Get the exercises list, theme (or not if none selected) related"""
-#         if self.attr["selected_theme"]:
-#             sidebar_query = """
-#                 SELECT exercise_name
-#                 FROM exercises_list
-#                 WHERE theme = ?
-#                 ORDER BY last_reviewed
-#             """
-#             result = (
-#                 self.attr["connection"]
-#                 .execute(sidebar_query, [self.attr["selected_theme"]])
-#                 .fetchall()
-#             )
-#         else:
-#             sidebar_query = """
-#                 SELECT exercise_name
-#                 FROM exercises_list
-#                 ORDER BY last_reviewed
-#             """
-#             result = self.attr["connection"].execute(sidebar_query).fetchall()
-
-#         return [elt[0] for elt in result]
-
-#     def exercise_select_box(self) -> None:
-#         """
-#         Display a select box for all selected theme related exercise,
-#         and return the selected exercise name
-#         """
-#         self.attr["exercises"] = self.get_exercises()
-
-#         if self.attr["selected_theme"]:
-#             st.write(f'{self.attr["selected_theme"]} related exercises:')
-#         else:
-#             st.write("No theme selected. Any exercise can be selected.")
-#         self.attr["selected_exercise"] = st.selectbox(
-#             label="Which exercise would you like to do?",
-#             options=self.attr["exercises"],
-#             index=None,
-#             placeholder="Select an exercise",
-#         )
 
 #     def set_exercise_context(self) -> None:
 #         """
@@ -192,12 +201,7 @@ st.session_state.app.run()
 #             )
 
 
-#     def display_selected_exercise_context(self) -> None:
-#         """Display selected exercise context (except the proper query and the expected df)"""
-#         st.write(f'Selected theme: {self.attr["selected_theme"]}')
-#         st.write(f'Selected exercise: {self.attr["selected_exercise"]}')
-#         st.write('Selected exercise subject: self.attr["selected_exercise_subject"]')
-#         st.write('Selected exercise df(s): self.attr["selected_exercise_df"]')
+
 
 #     def attempt_query_field(self) -> None:
 #         """Section to attempt the exercise and compare with the expected answer"""
