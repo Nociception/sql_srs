@@ -184,8 +184,7 @@ class StreamlitApp:
                     st.write("Your query does not seem to be valid. (#TODO More informations here soon)")
                     st.write(e)
 
-                if "attemp_df" in st.session_state and st.session_state["attempt_df"] is not None:
-                    #TODO this bloc does not seem to be visited anymore
+                if "attempt_df" in st.session_state and st.session_state["attempt_df"] is not None:
                     if (
                         lines_delta :=
                             st.session_state["attempt_df"].shape[0]
