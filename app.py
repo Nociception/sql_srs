@@ -1,5 +1,5 @@
 # pylint: disable=missing-module-docstring
-# import polars as pl
+import polars as pl
 import duckdb
 import streamlit as st
 import init_db
@@ -29,7 +29,7 @@ class StreamlitApp:
         st.session_state.setdefault("solution_query", None)
         st.session_state.setdefault("solution_df", None)
         st.session_state.setdefault("attempt_query", None)
-        # st.session_state.setdefault("attempt_df", None)
+        st.session_state.setdefault("attempt_df", None)
         
     def header(self) -> None:
         """Display the app header."""
@@ -144,57 +144,47 @@ class StreamlitApp:
         )
 
     def attempt_tab(self) -> None:
-        """"""
-        pass
+        """
+        Handle what is displayed in the attempt tab:
+        - `attempt_df` according to user's `attempt_query`
+        - comparison between `attempt_df` and `solution_df`, without displaying it in this tab; just clues
+        - `selected_exercise` related table(s)
+        """
+        if st.session_state["solution_df"] is not None:
+            if st.session_state["attempt_query"] is not None:
+                try:
+                    st.session_state["attempt_df"] = self.con.execute(st.session_state["attempt_query"]).df()
+                    st.write("Your query lead to this dataframe:")
+                    st.dataframe(st.session_state["attempt_df"])
+                except Exception as e:  #TODO identify proper errors in case of invalid queries
+                    st.write("Your query does not seem to be valid. (#TODO More informations here soon)")
+                    st.write(e)
+
+                try:
+                    assert st.session_state["attempt_df"].equals(st.session_state["solution_df"])
+                except AttributeError:
+                    st.write("Please enter a valid query.")
+                except pl.exceptions.ColumnNotFoundError:
+                    st.write("Some columns are missing.")
+                except AssertionError:
+                    st.markdown(
+                        "<span style='color:red; font-weight:bold'>"
+                        "Error: some values are not the same!</span>",
+                        unsafe_allow_html=True,
+                    )
+                if (
+                    delta :=
+                        st.session_state["attempt_df"].shape[0]
+                        - st.session_state["solution_df"].shape[0]
+                ) != 0:
+                    delta_massage: str = f"extra" if delta > 0 else f"missing"
+                    st.write(f"There are {abs(delta)} {delta_massage} line(s).")
+        else:
+            st.write("You may select an exercise before trying anything in this query area.")
 
     def solution_tab(self) -> None:
         """"""
         pass
-
-    def tabs(self) -> None:
-        """"""
-        attempt_tab, solution_tab = st.tabs(
-            [
-                "Attempt",
-                "Solution",
-            ]
-        )
-        with attempt_tab:
-            self.attempt_tab()
-        with solution_tab:
-            self.solution_tab()
-#         self.display_result_tab()
-
-
-#    def attempt_result_vs_expected_df_comparison(self) -> None:
-#         """
-#         Compare the attempt result df with the expected df
-#         according to the selected exercise expected df
-#         """
-#         with self.attr["attempt_result_tab"]:
-#             if (
-#                 self.attr["attempt_df"] is not None
-#                 and self.attr["solution_df"] is not None
-#             ):
-#                 try:
-#                     assert self.attr["attempt_df"].equals(self.attr["solution_df"])
-#                 except AttributeError:
-#                     st.write("Please enter a valid query")
-#                 except pl.exceptions.ColumnNotFoundError:
-#                     st.write("Some columns are missing")
-#                 except AssertionError:
-#                     st.markdown(
-#                         "<span style='color:red; font-weight:bold'>"
-#                         "Error: some values are not the same!</span>",
-#                         unsafe_allow_html=True,
-#                     )
-#                 if (
-#                     delta := abs(
-#                         self.attr["attempt_df"].shape[0]
-#                         - self.attr["solution_df"].shape[0]
-#                     )
-#                 ) != 0:
-#                     st.write(f"{delta} lines are missing.")
 
 
 #     def display_solution(self) -> None:
@@ -210,6 +200,18 @@ class StreamlitApp:
 #                     self.attr["connection"].execute(self.attr["solution_query"]).df()
 #                 )
 
+    def tabs(self) -> None:
+        """"""
+        attempt_tab, solution_tab = st.tabs(
+            [
+                "Attempt",
+                "Solution",
+            ]
+        )
+        with attempt_tab:
+            self.attempt_tab()
+        with solution_tab:
+            self.solution_tab()
 
     def run(self) -> None:
         """Encapsulate the main flow of the Streamlit app"""
@@ -219,7 +221,6 @@ class StreamlitApp:
         self.attempt_query_area()
         self.tabs()
 #         remind to clean the current exercise variables after an exercise attempt session done (signaled from the user ?)
-
 
 
 if "app" not in st.session_state:
