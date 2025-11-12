@@ -22,7 +22,8 @@ jobs:
           python-version: '3.9'
       - run: |
           python -m pip install --upgrade pip
-          pip install pylint duckdb polars streamlit
+          pip install --upgrade pylint astroid
+          pip install duckdb polars streamlit
       - run: |
           pylint app.py
   

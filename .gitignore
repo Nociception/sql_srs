@@ -10,6 +10,7 @@ wheels/
 .venv
 
 test_db.py
+cybersecu_sql.txt
 
 texas_executions.csv
 texas_executions_clean.csv
