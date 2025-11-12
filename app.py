@@ -42,7 +42,12 @@ class StreamlitApp:
 
     def get_themes(self) -> list[str]:
         """Gets all the existing themes in the exercises database"""
-        return self.con.execute("SELECT * FROM themes").df()["theme"].to_list()
+        return self.con.execute("""
+            SELECT
+                *
+            FROM
+                themes
+        """).df()["theme"].to_list()
 
     def theme_select_box(self) -> None:
         """
@@ -63,10 +68,14 @@ class StreamlitApp:
         sidebar_query: None | str = None
         if st.session_state.selected_theme:
             sidebar_query = """
-                SELECT exercise_name
-                FROM exercises_list
-                WHERE theme = ?
-                ORDER BY last_reviewed
+                SELECT
+                    exercise_name
+                FROM
+                    exercises_list
+                WHERE
+                    theme = ?
+                ORDER BY
+                    last_reviewed
             """
             result = (
                 self.con
@@ -75,9 +84,12 @@ class StreamlitApp:
             )
         else:
             sidebar_query = """
-                SELECT exercise_name
-                FROM exercises_list
-                ORDER BY last_reviewed
+                SELECT
+                    exercise_name
+                FROM
+                    exercises_list
+                ORDER BY
+                    last_reviewed
             """
             result = self.con.execute(sidebar_query).fetchall()
 
@@ -113,7 +125,7 @@ class StreamlitApp:
 
     def set_exercise_context(self) -> None:
         """
-        Once an exercise is selected, store in `st.session_state`:
+        Once an exercise is selected, store in `st.session_state` by parsing the metadata documented .sql file:
         - `subject`
         - `related table(s)`
         - `selex_solution_query`
@@ -132,7 +144,6 @@ class StreamlitApp:
                         if metadata_pattern + "tables:" in line:
                             st.session_state["selex_tables"] = line[line.index(':') + 1:].split()
                         elif metadata_pattern + "subject:" in line:
-
                             st.session_state["selex_subject"] = line[line.index(':') + 1:]
                     else:
                         sql_lines.append(line)
@@ -206,12 +217,13 @@ class StreamlitApp:
                         unsafe_allow_html=True,
                     )
 
-
             st.write("Selected exercise related table(s):")
             for table in st.session_state["selex_tables"]:
                 st.dataframe(self.con.execute(f"""
-                    SELECT *
-                    FROM '{table}'
+                    SELECT
+                        *
+                    FROM
+                        '{table}'
                 """))
         else:
             st.write("You may select an exercise before trying anything in this query area.")
