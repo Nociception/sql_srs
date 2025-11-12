@@ -1,4 +1,4 @@
--- themes: where_clause
+-- themes: where
 -- tables: executions
 -- subject: Display first_name, last_name and ex_date from all executed inmates aged 25 or less.
 

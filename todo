@@ -1,0 +1,31 @@
+SRS
+
+add dus exercises
+
+edit LICENSES.md file for DUS
+
+display subject with st.code instead of st.write
+
+check if AS aliases affect comparisons (equals)
+
+add feature: hide exercise's theme (which can be an unwanted clue)
+
+add text_area filler field (depands on the selex)
+
+users
+
+remove and make the exercises_list table generated from .sql files
+
+stop tabs in text_area
+
+add a field `difficulty`
+
+docstrings TODO
+
+replace all .df() with pl.Dataframe
+
+scroll to query text_area
+
+handle sql injection
+
+unit tests
