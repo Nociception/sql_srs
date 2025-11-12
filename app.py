@@ -141,7 +141,7 @@ class StreamlitApp:
             metadata_pattern: str = "-- "
             sql_lines = []
             with open(
-                f'answers/{st.session_state["selex"]}.sql',
+                f'exercises/{st.session_state["selex"]}.sql',
                 "r",
                 encoding="utf-8",
             ) as sql_file:
