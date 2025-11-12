@@ -1,0 +1,21 @@
+SRS
+
+add exercises
+
+LICENSE (for selectstarsql and dus)
+
+stop tabs in text_area
+
+users
+
+docstrings TODO
+
+replace all .df() with pl.Dataframe
+
+scroll to query text_area
+
+handle sql injection
+
+unit tests
+
+readme
