@@ -71,8 +71,8 @@ class StreamlitApp:
 
     def get_exercises(self) -> list[str]:
         """Get the exercises list, theme (or not if none selected) related."""
-        result: None | list = None
-        sidebar_query: None | str = None
+        result = None
+        sidebar_query = None
         if st.session_state.selected_theme:
             sidebar_query = """
                 SELECT
@@ -139,7 +139,7 @@ class StreamlitApp:
         """
         if "selex" in st.session_state and st.session_state["selex"] is not None:
             metadata_pattern: str = "-- "
-            sql_lines: list[str] | list[None] = []
+            sql_lines = []
             with open(
                 f'answers/{st.session_state["selex"]}.sql',
                 "r",
