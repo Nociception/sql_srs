@@ -28,13 +28,15 @@ def feed_db_from_data_files(con: duckdb.DuckDBPyConnection) -> None:
 
 def create_themes_table(con: duckdb.DuckDBPyConnection) -> None:
     """Create `themes` table from `exercises_list` table."""
-    con.execute("""
+    con.execute(
+        """
         CREATE OR REPLACE TABLE
             themes AS SELECT DISTINCT theme
         FROM
             exercises_list
-    """)
-       
+    """
+    )
+
 
 def init_db() -> None:
     """Initialize the db by creating all the tables the app needs."""
