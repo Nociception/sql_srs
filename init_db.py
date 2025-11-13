@@ -1,7 +1,8 @@
 # pylint: disable=missing-module-docstring
-import duckdb
+import os
 from pathlib import Path
 import re
+import duckdb
 
 DATA_PATH = Path("data/exercises_sql_tables.duckdb")
 EXERCISES_DIR = Path("exercises")
@@ -14,6 +15,26 @@ def init_db() -> None:
     """
 
     with duckdb.connect(str(DATA_PATH), read_only=False) as con:
+
+        for filename in os.listdir("data"):
+            if filename.endswith(".csv"):
+                con.execute(
+                    f"""
+                    CREATE OR REPLACE TABLE
+                        {filename[:-4]} AS SELECT *
+                    FROM
+                        read_csv("data/{filename}")
+                """
+                )
+            elif filename.endswith(".parquet"):
+                con.execute(
+                    f"""
+                    CREATE OR REPLACE TABLE
+                        {filename[:-8]} AS SELECT *
+                    FROM
+                        read_parquet("data/{filename}")
+                """
+                )
 
         con.execute("""
             CREATE SEQUENCE IF NOT EXISTS

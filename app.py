@@ -52,7 +52,7 @@ class StreamlitApp:
                 themes
         """
             )
-            .df()["theme"]
+            .df()["theme_name"]
             .to_list()
         )
 
@@ -70,35 +70,37 @@ class StreamlitApp:
         )
 
     def get_exercises(self) -> list[str]:
-        """Get the exercises list, theme (or not if none selected) related."""
-        result = None
-        sidebar_query = None
-        if st.session_state.selected_theme:
-            sidebar_query = """
-                SELECT
-                    exercise_name
-                FROM
-                    exercises_list
-                WHERE
-                    theme = ?
-                ORDER BY
-                    last_reviewed
-            """
-            result = self.con.execute(
-                sidebar_query, [st.session_state.selected_theme]
-            ).fetchall()
-        else:
-            sidebar_query = """
-                SELECT
-                    exercise_name
-                FROM
-                    exercises_list
-                ORDER BY
-                    last_reviewed
-            """
-            result = self.con.execute(sidebar_query).fetchall()
+        """Return the list of exercise names, optionally filtered by selected theme."""
 
-        return [elt[0] for elt in result]
+        if st.session_state.selected_theme:
+            query = """
+                SELECT
+                    e.exercise_name
+                FROM
+                    exercises AS e
+                JOIN
+                    exercise_theme AS et ON e.id = et.exercise_id
+                JOIN
+                    themes AS t ON t.id = et.theme_id
+                WHERE
+                    t.theme_name = ?
+                ORDER BY
+                    e.exercise_name
+            """
+            rows = self.con.execute(query, [st.session_state.selected_theme]).fetchall()
+
+        else:
+            query = """
+                SELECT
+                    exercise_name
+                FROM
+                    exercises
+                ORDER BY
+                    exercise_name
+            """
+            rows = self.con.execute(query).fetchall()
+
+        return [row[0] for row in rows]
 
     def exercise_select_box(self) -> None:
         """
