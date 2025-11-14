@@ -150,6 +150,26 @@ def populate_relation_tables(con: duckdb.DuckDBPyConnection) -> None:
             )
 
 
+def create_user_session(con: duckdb.DuckDBPyConnection) -> None:
+    """
+    Create the user_session table storing performance, timing, and SRS score.
+    last_reviewed is kept because it is required to compute the score.
+    next_review is intentionally not stored: the score replaces it.
+    """
+    con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS
+            user_session (
+                exercise_id INTEGER PRIMARY KEY,
+                attempts INTEGER NOT NULL DEFAULT 0,
+                success INTEGER NOT NULL DEFAULT 0,
+                last_reviewed TIMESTAMP,
+                srs_score DOUBLE NOT NULL DEFAULT 0
+            )
+        """
+    )
+
+
 def init_db() -> None:
     """
     Initialize DuckDB database with exercises, themes, and association tables.
@@ -160,6 +180,7 @@ def init_db() -> None:
         create_and_populate_exercise_related_tables(con)
         prepare_and_create_relation_tables(con)
         populate_relation_tables(con)
+        create_user_session(con)
 
 
 if __name__ == "__main__":
