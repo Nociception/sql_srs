@@ -305,15 +305,17 @@ class StreamlitApp:
             )
 
     def solution_tab(self) -> None:
-        """
-        Display in the solution tab:
-        - `selex_solution_query`
-        - `selex_solution_df`
-        TODO: Add a button to reveal the solution_query
-        """
-        st.write("Solution query:")
-        st.code(st.session_state["selex_solution_query"])
-        st.dataframe(st.session_state["selex_solution_df"])
+        """Display the solution query only when the user clicks a button."""
+        st.session_state.setdefault("show_solution", False)
+
+        if not st.session_state["show_solution"]:
+            if st.button("Reveal solution"):
+                st.session_state["show_solution"] = True
+                st.rerun()
+
+        if st.session_state["show_solution"]:
+            st.subheader("Solution query:")
+            st.code(st.session_state["selex_solution_query"])
 
     def tabs(self) -> None:
         """
