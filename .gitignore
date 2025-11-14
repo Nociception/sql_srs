@@ -9,10 +9,7 @@ wheels/
 # Virtual environments
 .venv
 
+# Misc
 test_db.py
 cybersecu_sql.txt
-
-texas_executions.csv
-texas_executions_clean.csv
-
 data/*.duckdb
