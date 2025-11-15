@@ -1,4 +1,8 @@
-# pylint: disable=missing-module-docstring
+"""
+Long file (so far) here.
+If you browse it on VSCode, keep Ctrl pressed, and then K then 2 to collapse class methods.
+Ctrl + K J to unfold everything.
+"""
 import duckdb
 import streamlit as st
 from init_db import init_db
@@ -32,6 +36,7 @@ class StreamlitApp:
             "selex_solution_df": None,
             "attempt_query": None,
             "attempt_df": None,
+            "app_mode": "selection"
         }
         for key, value in defaults.items():
             st.session_state.setdefault(key, value)
@@ -40,6 +45,19 @@ class StreamlitApp:
         """Display the app header."""
         st.title("SQL SRS - Training App")
         st.write("(SQL Spaced Repetition System)")
+        st.write(f"{st.session_state['app_mode']} mode enable.")
+        if st.session_state["app_mode"] == "selection":
+            st.write("""
+                Press the button `Start exercise` in the side bar,
+                once you have selected a theme (optionnal)
+                and an exercise (mandatory).
+            """)
+        elif st.session_state["app_mode"] == "resolution":
+            st.write("""
+                To switch back to selection mode,
+                press the button `Attempt done`.
+                (It counts whether you succeeded or not for SRS score.)
+            """)
 
     def get_themes(self) -> list[str]:
         """Gets all the existing themes in the exercises database."""
@@ -120,16 +138,6 @@ class StreamlitApp:
             index=None,
         )
 
-    def side_bar(self) -> None:
-        """Display the sidebar, to choose the theme and exercise."""
-        with st.sidebar:
-            self.theme_select_box()
-            st.session_state.exercises = self.get_exercises()
-            self.exercise_select_box()
-
-            st.write(f'Selected theme: {st.session_state["selected_theme"]}')
-            st.write(f'Selected exercise: {st.session_state["selex"]}')
-
     def set_exercise_context(self) -> None:
         """
         Once an exercise is selected, store in `st.session_state`
@@ -165,6 +173,44 @@ class StreamlitApp:
             ).df()
         else:
             st.write("Selex exercise context not set.")
+
+    def reset_exercise_context(self):
+        st.session_state.update({
+            "attempt_query": "",
+            "attempt_df": None,
+            "show_solution": False,
+            "selected_theme": None,
+            "selex": None,
+            "selex_tables": [],
+            "selex_subject": None,
+            "selex_solution_query": None,
+            "selex_solution_df": None,
+        })
+
+    def side_bar(self) -> None:
+        """Display the sidebar, to choose the theme and exercise."""
+        with st.sidebar:
+            if st.session_state["app_mode"] == "selection":
+                self.theme_select_box()
+                st.session_state.exercises = self.get_exercises()
+                self.exercise_select_box()
+                if st.session_state["selex"] is not None:
+                    if st.button("Start exercise"):
+                        st.session_state["app_mode"] = "resolution"
+                        self.set_exercise_context()
+                        st.session_state["show_solution"] = False
+                        st.rerun()
+
+            elif st.session_state["app_mode"] == "resolution":
+                if "selected_theme" in st.session_state:
+                    st.write(f'Selected theme: {st.session_state["selected_theme"]}')
+                if "selex" in st.session_state:
+                    st.write(f'Selected exercise: {st.session_state["selex"]}')
+
+                if st.button("Back to selection mode"):
+                    st.session_state["app_mode"] = "selection"
+                    self.reset_exercise_context()
+                    st.rerun()
 
     def display_selex_context(self) -> None:
         """Display selected exercise subject just above the attempt query area."""
@@ -311,7 +357,7 @@ class StreamlitApp:
         if not st.session_state["show_solution"]:
             if st.button("Reveal solution"):
                 st.session_state["show_solution"] = True
-                st.rerun()
+                # st.rerun()
 
         if st.session_state["show_solution"]:
             st.subheader("Solution query:")
@@ -334,13 +380,15 @@ class StreamlitApp:
             self.solution_tab()
 
     def run(self) -> None:
-        """Encapsulate the main flow of the Streamlit app"""
-        self.header()
+        """Encapsulate the main flow of the Streamlit app."""
         self.side_bar()
         self.set_exercise_context()
-        self.display_selex_context()
-        self.attempt_query_area()
-        self.tabs()
+
+        self.header()
+        if st.session_state["app_mode"] == "resolution":
+            self.display_selex_context()
+            self.attempt_query_area()
+            self.tabs()
 
 
 if "app" not in st.session_state:
