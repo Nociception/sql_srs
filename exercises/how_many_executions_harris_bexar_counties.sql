@@ -1,6 +1,6 @@
 -- themes: count sum case_when
 -- tables: executions
--- subject: Display, in two columns: the number of executions in the counties of Harris and Bexar
+-- subject: Display, in two columns: the number of executions in the counties of Harris and Bexar (in this order)
 -- TODO: fix this exercise with future features (text area filler)
 
 SELECT
