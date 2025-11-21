@@ -1,4 +1,32 @@
-# pylint: disable=missing-module-docstring
+"""
+This module implements a Streamlit-based SQL training application using a
+spaced-repetition-inspired workflow. It loads exercises from a DuckDB
+database and from `.sql` exercise files containing metadata. The module
+provides:
+
+- Initialization of a persistent DuckDB connection (cached per Streamlit session).
+- A `StreamlitApp` class encapsulating all UI components and application logic.
+- Sidebar widgets for selecting a theme and an exercise.
+- Automatic extraction of exercise metadata (subject, related tables,
+  solution query) from `.sql` files.
+- Display of exercise context (tables preview, subject).
+- A text area allowing the user to type an SQL query (`attempt_query`).
+- Execution of the user's SQL attempt and comparison with the reference solution:
+    * shape checks
+    * values checks
+    * success indication
+- Tabs for "Attempt" and "Solution", with the reference solution query and dataframe.
+
+All user interaction state (selected theme, selected exercise, typed SQL,
+dataframes, etc.) is stored in `st.session_state`, due to Streamlit's
+rerun-on-interaction execution model. The application is fully
+self-contained and executed through `st.session_state.app.run()`.
+
+Browsing/exploring file reminder :
+Keep Ctrl pressed, and press K and 2, to fold everything above the 2nd indent level.
+(Ctrl + J to unfold everything)
+"""
+
 import duckdb
 import streamlit as st
 from init_db import init_db
