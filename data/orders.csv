@@ -1,0 +1,7 @@
+order_id,product_id,quantity,price_per_unit,discount_code
+1,101,5,10.0,
+2,102,3,25.0,DISCOUNT10
+3,101,2,10.0,DISCOUNT20
+4,103,4,8.0,
+5,102,6,25.0,
+6,103,2,8.0,UNKNOWN
