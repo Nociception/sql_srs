@@ -1,12 +1,12 @@
-create a whole (multi lines) subject field in .sql exercise files, and a proper parsing for
-
-test/explore the streamlit callback feature to check if it can solve the current session_state problems
+add dus exercises
 
 SRS with manual user choices through buttons
 
-add dus exercises
+handle sql injection (organize tables in the duckdb database ; or maybe several duckdb databases)
 
-check if AS aliases affect comparisons (equals pandas' method)
+create a whole (multi lines) subject field in .sql exercise files, and a proper parsing for
+
+test/explore the streamlit callback feature to check if it can solve the current session_state problems
 
 harmonize session_state calls : only dict style, no more object style (even if both are available and equivalent)
 
@@ -27,8 +27,6 @@ docstrings TODO
 replace all .df() with pl.Dataframe
 
 auto scroll to query text_area
-
-handle sql injection (organize tables in the duckdb database ; or maybe several duckdb databases)
 
 unit tests
 
